@@ -27,6 +27,25 @@
 #define cpu_map_h
 
 
+#ifdef CPU_MAP_STM32
+  #define F_CPU HAL_RCC_GetSysClockFreq()
+
+  // Define step pulse output pins. NOTE: All step bit pins must be on the same port.
+  #define X_STEP_BIT      0  // Uno Digital Pin 2
+  #define Y_STEP_BIT      1  // Uno Digital Pin 3
+  #define Z_STEP_BIT      2  // Uno Digital Pin 4
+  #define STEP_MASK       ((1<<X_STEP_BIT)|(1<<Y_STEP_BIT)|(1<<Z_STEP_BIT)) // All step bits
+
+  // Define homing/hard limit switch input pins and limit interrupt vectors.
+  #define X_LIMIT_BIT      X_AXIS
+  #define Y_LIMIT_BIT      Y_AXIS
+  #define Z_LIMIT_BIT	   Z_AXIS
+  #if !defined(ENABLE_DUAL_AXIS)
+    #define LIMIT_MASK     ((1<<X_LIMIT_BIT)|(1<<Y_LIMIT_BIT)|(1<<Z_LIMIT_BIT)) // All limit bits
+  #endif
+
+#endif
+
 #ifdef CPU_MAP_ATMEGA328P // (Arduino Uno) Officially supported by Grbl.
 
   // Define serial port pins and interrupt vectors.

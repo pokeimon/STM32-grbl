@@ -20,10 +20,11 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "string.h"
-//#include "grbl/grbl.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "grbl/grbl.h"
+#include "grbl/config.h"
 
 /* USER CODE END Includes */
 
@@ -129,8 +130,72 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  while (1)
+  // Initialize system upon power-up.
+  serial_init();   // Setup serial baud rate and interrupts
+  settings_init(); // Load Grbl settings from EEPROM
+  stepper_init();  // Configure stepper pins and interrupt timers
+  system_init();   // Configure pinout pins and pin-change interrupt
+
+  memset(sys_position,0,sizeof(sys_position)); // Clear machine position.
+  sei(); // Enable interrupts
+
+  // Initialize system state.
+  #ifdef FORCE_INITIALIZATION_ALARM
+    // Force Grbl into an ALARM state upon a power-cycle or hard reset.
+    sys.state = STATE_ALARM;
+  #else
+    sys.state = STATE_IDLE;
+  #endif
+
+  // Check for power-up and set system alarm if homing is enabled to force homing cycle
+  // by setting Grbl's alarm state. Alarm locks out all g-code commands, including the
+  // startup scripts, but allows access to settings and internal commands. Only a homing
+  // cycle '$H' or kill alarm locks '$X' will disable the alarm.
+  // NOTE: The startup script will run after successful completion of the homing cycle, but
+  // not after disabling the alarm locks. Prevents motion startup blocks from crashing into
+  // things uncontrollably. Very bad.
+  #ifdef HOMING_INIT_LOCK
+    if (bit_istrue(settings.flags,BITFLAG_HOMING_ENABLE)) { sys.state = STATE_ALARM; }
+  #endif
+
+  // Grbl initialization loop upon power-up or a system abort. For the latter, all processes
+  // will return to this loop to be cleanly re-initialized.
+
+  for (;;)
   {
+	// Reset system variables.
+	uint8_t prior_state = sys.state;
+	memset(&sys, 0, sizeof(system_t)); // Clear system struct variable.
+	sys.state = prior_state;
+	sys.f_override = DEFAULT_FEED_OVERRIDE;  // Set to 100%
+	sys.r_override = DEFAULT_RAPID_OVERRIDE; // Set to 100%
+	sys.spindle_speed_ovr = DEFAULT_SPINDLE_SPEED_OVERRIDE; // Set to 100%
+		memset(sys_probe_position,0,sizeof(sys_probe_position)); // Clear probe position.
+	sys_probe_state = 0;
+	sys_rt_exec_state = 0;
+	sys_rt_exec_alarm = 0;
+	sys_rt_exec_motion_override = 0;
+	sys_rt_exec_accessory_override = 0;
+
+	// Reset Grbl primary systems.
+	serial_reset_read_buffer(); // Clear serial read buffer
+	gc_init(); // Set g-code parser to default state
+	spindle_init();
+	coolant_init();
+	limits_init();
+	probe_init();
+	plan_reset(); // Clear block buffer and planner variables
+	st_reset(); // Clear stepper subsystem variables.
+
+	// Sync cleared gcode and planner positions to current system position.
+	plan_sync_position();
+	gc_sync_position();
+
+	// Print welcome message. Indicates an initialization has occured at power-up or with a reset.
+	report_init_message();
+
+	// Start Grbl main loop. Processes program inputs and executes them.
+	protocol_main_loop();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -336,21 +401,28 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
-  __HAL_RCC_GPIOE_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, LD1_Pin|LD3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(STEPPERS_DISABLE_GPIO_Port, STEPPERS_DISABLE_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, LD1_Pin|Coolant_Flood_Pin|LD3_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOE, Y_STEP_Pin|Z_STEP_Pin|LD2_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(USB_OTG_FS_PWR_EN_GPIO_Port, USB_OTG_FS_PWR_EN_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(X_STEP_GPIO_Port, X_STEP_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -358,12 +430,32 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LD1_Pin LD3_Pin */
-  GPIO_InitStruct.Pin = LD1_Pin|LD3_Pin;
+  /*Configure GPIO pin : STEPPERS_DISABLE_Pin */
+  GPIO_InitStruct.Pin = STEPPERS_DISABLE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(STEPPERS_DISABLE_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PROBE_Pin */
+  GPIO_InitStruct.Pin = PROBE_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(PROBE_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LD1_Pin Coolant_Flood_Pin LD3_Pin */
+  GPIO_InitStruct.Pin = LD1_Pin|Coolant_Flood_Pin|LD3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : Y_STEP_Pin Z_STEP_Pin LD2_Pin */
+  GPIO_InitStruct.Pin = Y_STEP_Pin|Z_STEP_Pin|LD2_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
   /*Configure GPIO pin : USB_OTG_FS_PWR_EN_Pin */
   GPIO_InitStruct.Pin = USB_OTG_FS_PWR_EN_Pin;
@@ -372,18 +464,30 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(USB_OTG_FS_PWR_EN_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pins : Y_LIMIT_Pin X_LIMIT_Pin */
+  GPIO_InitStruct.Pin = Y_LIMIT_Pin|X_LIMIT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
   /*Configure GPIO pin : USB_OTG_FS_OVCR_Pin */
   GPIO_InitStruct.Pin = USB_OTG_FS_OVCR_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(USB_OTG_FS_OVCR_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LD2_Pin */
-  GPIO_InitStruct.Pin = LD2_Pin;
+  /*Configure GPIO pin : X_STEP_Pin */
+  GPIO_InitStruct.Pin = X_STEP_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(X_STEP_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Z_LIMIT_Pin */
+  GPIO_InitStruct.Pin = Z_LIMIT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(Z_LIMIT_GPIO_Port, &GPIO_InitStruct);
 
 }
 

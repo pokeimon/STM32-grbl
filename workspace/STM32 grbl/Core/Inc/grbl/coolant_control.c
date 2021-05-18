@@ -23,10 +23,7 @@
 
 void coolant_init()
 {
-  COOLANT_FLOOD_DDR |= (1 << COOLANT_FLOOD_BIT); // Configure as output pin
-  #ifdef ENABLE_M7
-    COOLANT_MIST_DDR |= (1 << COOLANT_MIST_BIT);
-  #endif
+  // Init of GPIOs takes place in main.c
   coolant_stop();
 }
 
@@ -36,17 +33,17 @@ uint8_t coolant_get_state()
 {
   uint8_t cl_state = COOLANT_STATE_DISABLE;
   #ifdef INVERT_COOLANT_FLOOD_PIN
-    if (bit_isfalse(COOLANT_FLOOD_PORT,(1 << COOLANT_FLOOD_BIT))) {
+  	 if (!HAL_GPIO_ReadPin(Coolant_Flood_GPIO_Port, Coolant_Flood_Pin)) {
   #else
-    if (bit_istrue(COOLANT_FLOOD_PORT,(1 << COOLANT_FLOOD_BIT))) {
+    if (HAL_GPIO_ReadPin(Coolant_Flood_GPIO_Port, Coolant_Flood_Pin)) {
   #endif
     cl_state |= COOLANT_STATE_FLOOD;
   }
   #ifdef ENABLE_M7
     #ifdef INVERT_COOLANT_MIST_PIN
-      if (bit_isfalse(COOLANT_MIST_PORT,(1 << COOLANT_MIST_BIT))) {
+      if (!HAL_GPIO_ReadPin(Coolant_Mist_GPIO_Port, Coolant_Mist_Pin)) {
     #else
-      if (bit_istrue(COOLANT_MIST_PORT,(1 << COOLANT_MIST_BIT))) {
+      if (HAL_GPIO_ReadPin(Coolant_Mist_GPIO_Port, Coolant_Mist_Pin)) {
     #endif
       cl_state |= COOLANT_STATE_MIST;
     }
@@ -60,15 +57,15 @@ uint8_t coolant_get_state()
 void coolant_stop()
 {
   #ifdef INVERT_COOLANT_FLOOD_PIN
-    COOLANT_FLOOD_PORT |= (1 << COOLANT_FLOOD_BIT);
+	HAL_GPIO_WritePin(Coolant_Flood_GPIO_Port, Coolant_Flood_Pin, 1);
   #else
-    COOLANT_FLOOD_PORT &= ~(1 << COOLANT_FLOOD_BIT);
+    HAL_GPIO_WritePin(Coolant_Flood_GPIO_Port, Coolant_Flood_Pin, 0);
   #endif
   #ifdef ENABLE_M7
     #ifdef INVERT_COOLANT_MIST_PIN
-      COOLANT_MIST_PORT |= (1 << COOLANT_MIST_BIT);
+      HAL_GPIO_WritePin(Coolant_Mist_GPIO_Port, Coolant_Mist_Pin, 1);
     #else
-      COOLANT_MIST_PORT &= ~(1 << COOLANT_MIST_BIT);
+      HAL_GPIO_WritePin(Coolant_Mist_GPIO_Port, Coolant_Mist_Pin, 0);
     #endif
   #endif
 }
@@ -84,30 +81,30 @@ void coolant_set_state(uint8_t mode)
   
 	if (mode & COOLANT_FLOOD_ENABLE) {
 		#ifdef INVERT_COOLANT_FLOOD_PIN
-			COOLANT_FLOOD_PORT &= ~(1 << COOLANT_FLOOD_BIT);
+			HAL_GPIO_WritePin(Coolant_Flood_GPIO_Port, Coolant_Flood_Pin, 0);
 		#else
-			COOLANT_FLOOD_PORT |= (1 << COOLANT_FLOOD_BIT);
+			HAL_GPIO_WritePin(Coolant_Flood_GPIO_Port, Coolant_Flood_Pin, 1);
 		#endif
 	} else {
 	  #ifdef INVERT_COOLANT_FLOOD_PIN
-			COOLANT_FLOOD_PORT |= (1 << COOLANT_FLOOD_BIT);
+			HAL_GPIO_WritePin(Coolant_Flood_GPIO_Port, Coolant_Flood_Pin, 1);
 		#else
-			COOLANT_FLOOD_PORT &= ~(1 << COOLANT_FLOOD_BIT);
+			HAL_GPIO_WritePin(Coolant_Flood_GPIO_Port, Coolant_Flood_Pin, 0);
 		#endif
 	}
   
 	#ifdef ENABLE_M7
 		if (mode & COOLANT_MIST_ENABLE) {
 			#ifdef INVERT_COOLANT_MIST_PIN
-				COOLANT_MIST_PORT &= ~(1 << COOLANT_MIST_BIT);
+			    HAL_GPIO_WritePin(Coolant_Mist_GPIO_Port, Coolant_Mist_Pin, 0);
 			#else
-				COOLANT_MIST_PORT |= (1 << COOLANT_MIST_BIT);
+			    HAL_GPIO_WritePin(Coolant_Mist_GPIO_Port, Coolant_Mist_Pin, 1);
 			#endif
 		} else {
 			#ifdef INVERT_COOLANT_MIST_PIN
-				COOLANT_MIST_PORT |= (1 << COOLANT_MIST_BIT);
+			    HAL_GPIO_WritePin(Coolant_Mist_GPIO_Port, Coolant_Mist_Pin, 1);
 			#else
-				COOLANT_MIST_PORT &= ~(1 << COOLANT_MIST_BIT);
+			    HAL_GPIO_WritePin(Coolant_Mist_GPIO_Port, Coolant_Mist_Pin, 0);
 			#endif
 		}
 	#endif

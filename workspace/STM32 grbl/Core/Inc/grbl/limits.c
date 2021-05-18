@@ -40,19 +40,19 @@
 
 void limits_init()
 {
-  LIMIT_DDR &= ~(LIMIT_MASK); // Set as input pins
+  //LIMIT_DDR &= ~(LIMIT_MASK); // Set as input pins
 
   #ifdef DISABLE_LIMIT_PIN_PULL_UP
-    LIMIT_PORT &= ~(LIMIT_MASK); // Normal low operation. Requires external pull-down.
+    //LIMIT_PORT &= ~(LIMIT_MASK); // Normal low operation. Requires external pull-down.
   #else
-    LIMIT_PORT |= (LIMIT_MASK);  // Enable internal pull-up resistors. Normal high operation.
+    //LIMIT_PORT |= (LIMIT_MASK);  // Enable internal pull-up resistors. Normal high operation.
   #endif
 
   if (bit_istrue(settings.flags,BITFLAG_HARD_LIMIT_ENABLE)) {
-    LIMIT_PCMSK |= LIMIT_MASK; // Enable specific pins of the Pin Change Interrupt
-    PCICR |= (1 << LIMIT_INT); // Enable Pin Change Interrupt
+    //LIMIT_PCMSK |= LIMIT_MASK; // Enable specific pins of the Pin Change Interrupt
+    //PCICR |= (1 << LIMIT_INT); // Enable Pin Change Interrupt
   } else {
-    limits_disable();
+    //limits_disable();
   }
 
   #ifdef ENABLE_SOFTWARE_DEBOUNCE
@@ -64,11 +64,11 @@ void limits_init()
 
 
 // Disables hard limits.
-void limits_disable()
+/*void limits_disable()
 {
   LIMIT_PCMSK &= ~LIMIT_MASK;  // Disable specific pins of the Pin Change Interrupt
   PCICR &= ~(1 << LIMIT_INT);  // Disable Pin Change Interrupt
-}
+}*/
 
 
 // Returns limit state as a bit-wise uint8 variable. Each bit indicates an axis limit, where
@@ -77,10 +77,15 @@ void limits_disable()
 uint8_t limits_get_state()
 {
   uint8_t limit_state = 0;
-  uint8_t pin = (LIMIT_PIN & LIMIT_MASK);
+  uint8_t pin = 0;
   #ifdef INVERT_LIMIT_PIN_MASK
     pin ^= INVERT_LIMIT_PIN_MASK;
   #endif
+
+  pin |= (HAL_GPIO_ReadPin(X_LIMIT_GPIO_Port, X_LIMIT_Pin) << X_LIMIT_BIT);
+  pin |= (HAL_GPIO_ReadPin(Y_LIMIT_GPIO_Port, Y_LIMIT_Pin) << Y_LIMIT_BIT);
+  pin |= (HAL_GPIO_ReadPin(Z_LIMIT_GPIO_Port, Z_LIMIT_Pin) << Z_LIMIT_BIT);
+
   if (bit_isfalse(settings.flags,BITFLAG_INVERT_LIMIT_PINS)) { pin ^= LIMIT_MASK; }
   if (pin) {
     uint8_t idx;
