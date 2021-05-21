@@ -148,4 +148,7 @@ local.properties
 # End of https://www.toptal.com/developers/gitignore/api/c,c++,eclipse
 
 # Ignore the build directory
-/workspace/STM32 grbl/Debug   
+/workspace/STM32 grbl/Debug  
+
+# Ignore directory
+/workspace/RemoteSystemsTempFiles
