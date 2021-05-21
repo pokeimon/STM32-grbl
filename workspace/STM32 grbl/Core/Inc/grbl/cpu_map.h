@@ -37,12 +37,22 @@
   #define STEP_MASK       ((1<<X_STEP_BIT)|(1<<Y_STEP_BIT)|(1<<Z_STEP_BIT)) // All step bits
 
   // Define homing/hard limit switch input pins and limit interrupt vectors.
-  #define X_LIMIT_BIT      X_AXIS
-  #define Y_LIMIT_BIT      Y_AXIS
-  #define Z_LIMIT_BIT	   Z_AXIS
+  #define LIMIT_PIN        X_LIMIT_GPIO_Port
+  #define X_LIMIT_MASK     X_LIMIT_Pin
+  #define Y_LIMIT_MASK     Y_LIMIT_Pin
+  #define Z_LIMIT_MASK	   Z_LIMIT_Pin
   #if !defined(ENABLE_DUAL_AXIS)
-    #define LIMIT_MASK     ((1<<X_LIMIT_BIT)|(1<<Y_LIMIT_BIT)|(1<<Z_LIMIT_BIT)) // All limit bits
+    #define LIMIT_MASK     (X_LIMIT_MASK|Y_LIMIT_Pin|Z_LIMIT_Pin) // All limit bits
   #endif
+
+  // Variable spindle configuration below. Do not change unless you know what you are doing.
+  // NOTE: Only used when variable spindle is enabled.
+  #define SPINDLE_PWM_MAX_VALUE     255 // Don't change. 328p fast PWM mode fixes top value as 255.
+  #ifndef SPINDLE_PWM_MIN_VALUE
+    #define SPINDLE_PWM_MIN_VALUE   1   // Must be greater than zero.
+  #endif
+  #define SPINDLE_PWM_OFF_VALUE     0
+  #define SPINDLE_PWM_RANGE         (SPINDLE_PWM_MAX_VALUE-SPINDLE_PWM_MIN_VALUE)
 
 #endif
 

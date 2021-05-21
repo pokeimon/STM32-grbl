@@ -50,6 +50,8 @@ extern UART_HandleTypeDef huart3;
 
 /* USER CODE END EM */
 
+void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
+
 /* Exported functions prototypes ---------------------------------------------*/
 void Error_Handler(void);
 
@@ -85,10 +87,14 @@ void Error_Handler(void);
 #define STEPPERS_DISABLE_GPIO_Port GPIOF
 #define PROBE_Pin GPIO_PIN_10
 #define PROBE_GPIO_Port GPIOF
+#define SPINDILE_Pin GPIO_PIN_3
+#define SPINDILE_GPIO_Port GPIOA
 #define LD1_Pin GPIO_PIN_0
 #define LD1_GPIO_Port GPIOB
 #define Coolant_Flood_Pin GPIO_PIN_1
 #define Coolant_Flood_GPIO_Port GPIOB
+#define X_STEP_Pin GPIO_PIN_12
+#define X_STEP_GPIO_Port GPIOE
 #define Y_STEP_Pin GPIO_PIN_13
 #define Y_STEP_GPIO_Port GPIOE
 #define Z_STEP_Pin GPIO_PIN_14
@@ -101,16 +107,14 @@ void Error_Handler(void);
 #define STLINK_TX_GPIO_Port GPIOD
 #define USB_OTG_FS_PWR_EN_Pin GPIO_PIN_10
 #define USB_OTG_FS_PWR_EN_GPIO_Port GPIOD
+#define Z_LIMIT_Pin GPIO_PIN_13
+#define Z_LIMIT_GPIO_Port GPIOD
 #define Y_LIMIT_Pin GPIO_PIN_14
 #define Y_LIMIT_GPIO_Port GPIOD
 #define X_LIMIT_Pin GPIO_PIN_15
 #define X_LIMIT_GPIO_Port GPIOD
 #define USB_OTG_FS_OVCR_Pin GPIO_PIN_7
 #define USB_OTG_FS_OVCR_GPIO_Port GPIOG
-#define X_STEP_Pin GPIO_PIN_14
-#define X_STEP_GPIO_Port GPIOG
-#define Z_LIMIT_Pin GPIO_PIN_5
-#define Z_LIMIT_GPIO_Port GPIOB
 #define LD2_Pin GPIO_PIN_1
 #define LD2_GPIO_Port GPIOE
 /* USER CODE BEGIN Private defines */

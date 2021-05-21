@@ -77,15 +77,10 @@ void limits_init()
 uint8_t limits_get_state()
 {
   uint8_t limit_state = 0;
-  uint8_t pin = 0;
+  uint16_t pin = ((LIMIT_PIN->IDR) & LIMIT_MASK);
   #ifdef INVERT_LIMIT_PIN_MASK
     pin ^= INVERT_LIMIT_PIN_MASK;
   #endif
-
-  pin |= (HAL_GPIO_ReadPin(X_LIMIT_GPIO_Port, X_LIMIT_Pin) << X_LIMIT_BIT);
-  pin |= (HAL_GPIO_ReadPin(Y_LIMIT_GPIO_Port, Y_LIMIT_Pin) << Y_LIMIT_BIT);
-  pin |= (HAL_GPIO_ReadPin(Z_LIMIT_GPIO_Port, Z_LIMIT_Pin) << Z_LIMIT_BIT);
-
   if (bit_isfalse(settings.flags,BITFLAG_INVERT_LIMIT_PINS)) { pin ^= LIMIT_MASK; }
   if (pin) {
     uint8_t idx;
