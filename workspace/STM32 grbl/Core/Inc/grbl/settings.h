@@ -93,8 +93,8 @@ typedef struct {
 
   // Remaining Grbl settings
   uint8_t pulse_microseconds;
-  uint8_t step_invert_mask;
-  uint8_t dir_invert_mask;
+  uint16_t step_invert_mask;
+  uint16_t dir_invert_mask;
   uint8_t stepper_idle_lock_time; // If max value 255, steppers do not disable.
   uint8_t status_report_mask; // Mask to indicate desired report data.
   float junction_deviation;
@@ -141,13 +141,13 @@ void settings_write_coord_data(uint8_t coord_select, float *coord_data);
 uint8_t settings_read_coord_data(uint8_t coord_select, float *coord_data);
 
 // Returns the step pin mask according to Grbl's internal axis numbering
-uint8_t get_step_pin_mask(uint8_t i);
+uint16_t get_step_pin_mask(uint8_t i);
 
 // Returns the direction pin mask according to Grbl's internal axis numbering
-uint8_t get_direction_pin_mask(uint8_t i);
+uint16_t get_direction_pin_mask(uint8_t i);
 
 // Returns the limit pin mask according to Grbl's internal axis numbering
-uint8_t get_limit_pin_mask(uint8_t i);
+uint16_t get_limit_pin_mask(uint8_t i);
 
 
 #endif

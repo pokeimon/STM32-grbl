@@ -107,8 +107,8 @@ typedef struct {
 
   uint8_t execute_step;     // Flags step execution for each interrupt.
   uint8_t step_pulse_time;  // Step pulse reset time after step rise
-  uint8_t step_outbits;         // The next stepping-bits to be output
-  uint8_t dir_outbits;
+  uint16_t step_outbits;         // The next stepping-bits to be output
+  uint16_t dir_outbits;
   #ifdef ENABLE_DUAL_AXIS
     uint8_t step_outbits_dual;
     uint8_t dir_outbits_dual;
@@ -130,11 +130,11 @@ static uint8_t segment_buffer_head;
 static uint8_t segment_next_head;
 
 // Step and direction port invert masks.
-static uint8_t step_port_invert_mask;
-static uint8_t dir_port_invert_mask;
+static uint16_t step_port_invert_mask;
+static uint16_t dir_port_invert_mask;
 #ifdef ENABLE_DUAL_AXIS
-  static uint8_t step_port_invert_mask_dual;
-  static uint8_t dir_port_invert_mask_dual;
+  static uint16_t step_port_invert_mask_dual;
+  static uint16_t dir_port_invert_mask_dual;
 #endif
 
 // Used to avoid ISR nesting of the "Stepper Driver Interrupt". Should never occur though.
@@ -332,7 +332,7 @@ ISR(TIMER1_COMPA_vect)
       st.step_bits_dual = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | st.step_outbits_dual;
     #endif
   #else  // Normal operation
-    STEP_PORT = (STEP_PORT & ~STEP_MASK) | st.step_outbits;
+    STEP_PORT->ODR = ((STEP_PORT->ODR & 0x00FF) & ~STEP_MASK) | st.step_outbits; //STEP_PORT = (STEP_PORT & ~STEP_MASK) | st.step_outbits;
     #ifdef ENABLE_DUAL_AXIS
       STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | st.step_outbits_dual;
     #endif
@@ -488,7 +488,7 @@ ISR(TIMER1_COMPA_vect)
 ISR(TIMER0_OVF_vect)
 {
   // Reset stepping pins (leave the direction pins)
-  STEP_PORT = (STEP_PORT & ~STEP_MASK) | (step_port_invert_mask & STEP_MASK);
+  STEP_PORT->ODR = ((STEP_PORT->ODR & 0x00FF) & ~STEP_MASK) | (step_port_invert_mask & STEP_MASK); //STEP_PORT = (STEP_PORT & ~STEP_MASK) | (step_port_invert_mask & STEP_MASK);
   #ifdef ENABLE_DUAL_AXIS
     STEP_PORT_DUAL = (STEP_PORT_DUAL & ~STEP_MASK_DUAL) | (step_port_invert_mask_dual & STEP_MASK_DUAL);
   #endif
@@ -550,8 +550,8 @@ void st_reset()
   st.dir_outbits = dir_port_invert_mask; // Initialize direction bits to default.
 
   // Initialize step and direction port pins.
-  STEP_PORT = (STEP_PORT & ~STEP_MASK) | step_port_invert_mask;
-  DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | dir_port_invert_mask;
+  STEP_PORT->ODR = ((STEP_PORT->ODR & 0x00FF) & ~STEP_MASK) | step_port_invert_mask;//STEP_PORT = (STEP_PORT & ~STEP_MASK) | step_port_invert_mask;
+  DIRECTION_PORT->ODR = ((DIRECTION_PORT->ODR & 0x00FF) & ~DIRECTION_MASK) | dir_port_invert_mask;//DIRECTION_PORT = (DIRECTION_PORT & ~DIRECTION_MASK) | dir_port_invert_mask;
   
   #ifdef ENABLE_DUAL_AXIS
     st.dir_outbits_dual = dir_port_invert_mask_dual;
@@ -564,11 +564,6 @@ void st_reset()
 // Initialize and start the stepper motor subsystem
 void stepper_init()
 {
-  // Configure step and direction interface pins
-  STEP_DDR |= STEP_MASK;
-  STEPPERS_DISABLE_DDR |= 1<<STEPPERS_DISABLE_BIT;
-  DIRECTION_DDR |= DIRECTION_MASK;
-  
   #ifdef ENABLE_DUAL_AXIS
     STEP_DDR_DUAL |= STEP_MASK_DUAL;
     DIRECTION_DDR_DUAL |= DIRECTION_MASK_DUAL;

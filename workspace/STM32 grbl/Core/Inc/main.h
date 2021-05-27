@@ -81,6 +81,12 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define X_DIRECTION_Pin GPIO_PIN_4
+#define X_DIRECTION_GPIO_Port GPIOE
+#define Y_DIRECTION_Pin GPIO_PIN_5
+#define Y_DIRECTION_GPIO_Port GPIOE
+#define Z_DIRECTION_Pin GPIO_PIN_6
+#define Z_DIRECTION_GPIO_Port GPIOE
 #define B1_Pin GPIO_PIN_13
 #define B1_GPIO_Port GPIOC
 #define STEPPERS_DISABLE_Pin GPIO_PIN_3
@@ -93,7 +99,7 @@ void Error_Handler(void);
 #define LD1_GPIO_Port GPIOB
 #define Coolant_Flood_Pin GPIO_PIN_1
 #define Coolant_Flood_GPIO_Port GPIOB
-#define X_STEP_Pin GPIO_PIN_12
+#define X_STEP_Pin GPIO_PIN_11
 #define X_STEP_GPIO_Port GPIOE
 #define Y_STEP_Pin GPIO_PIN_13
 #define Y_STEP_GPIO_Port GPIOE

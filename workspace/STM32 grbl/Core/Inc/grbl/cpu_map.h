@@ -26,23 +26,26 @@
 #ifndef cpu_map_h
 #define cpu_map_h
 
-
 #ifdef CPU_MAP_STM32
   #define F_CPU HAL_RCC_GetSysClockFreq()
 
   // Define step pulse output pins. NOTE: All step bit pins must be on the same port.
-  #define X_STEP_BIT      0  // Uno Digital Pin 2
-  #define Y_STEP_BIT      1  // Uno Digital Pin 3
-  #define Z_STEP_BIT      2  // Uno Digital Pin 4
-  #define STEP_MASK       ((1<<X_STEP_BIT)|(1<<Y_STEP_BIT)|(1<<Z_STEP_BIT)) // All step bits
+  #define STEP_PORT       X_STEP_GPIO_Port
+  #define STEP_MASK       (X_STEP_Pin|Y_STEP_Pin|Z_STEP_Pin) // All step bits
+
+  // Define step direction output pins. NOTE: All direction pins must be on the same port.
+  #define DIRECTION_PORT    X_DIRECTION_GPIO_Port
+  #define DIRECTION_MASK    (X_DIRECTION_Pin|Y_DIRECTION_Pin|Z_DIRECTION_Pin) // All direction bits
+
+  // Define stepper driver enable/disable output pin.
+  #define STEPPERS_DISABLE_BIT    STEPPERS_DISABLE_Pin
+  #define STEPPERS_DISABLE_MASK   STEPPERS_DISABLE_BIT
+
 
   // Define homing/hard limit switch input pins and limit interrupt vectors.
   #define LIMIT_PIN        X_LIMIT_GPIO_Port
-  #define X_LIMIT_MASK     X_LIMIT_Pin
-  #define Y_LIMIT_MASK     Y_LIMIT_Pin
-  #define Z_LIMIT_MASK	   Z_LIMIT_Pin
   #if !defined(ENABLE_DUAL_AXIS)
-    #define LIMIT_MASK     (X_LIMIT_MASK|Y_LIMIT_Pin|Z_LIMIT_Pin) // All limit bits
+    #define LIMIT_MASK     (X_LIMIT_Pin|Y_LIMIT_Pin|Z_LIMIT_Pin) // All limit bits
   #endif
 
   // Variable spindle configuration below. Do not change unless you know what you are doing.
