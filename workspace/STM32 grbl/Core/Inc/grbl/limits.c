@@ -45,7 +45,7 @@ void limits_init()
     /*Configure GPIO pins : Limit pins */
     GPIO_InitStruct.Pin = LIMIT_MASK;
     GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    GPIO_InitStruct.Pull = LIMIT_PULL;
     HAL_GPIO_Init(LIMIT_PORT, &GPIO_InitStruct);
   } else {
     limits_disable();
@@ -67,7 +67,7 @@ void limits_disable()
   /*Configure GPIO pins : Limit pins */
   GPIO_InitStruct.Pin = LIMIT_MASK;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = LIMIT_PULL;
   HAL_GPIO_Init(LIMIT_PORT, &GPIO_InitStruct);
 }
 

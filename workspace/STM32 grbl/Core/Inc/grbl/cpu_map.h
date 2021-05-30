@@ -42,8 +42,12 @@
   #define STEPPERS_DISABLE_MASK   STEPPERS_DISABLE_BIT
 
 
-  // Define homing/hard limit switch input pins and limit interrupt vectors.
+  // Define homing/hard limit switch input pins.
   #define LIMIT_PORT        X_LIMIT_GPIO_Port
+  #define LIMIT_PULL        GPIO_PULLUP
+  //#define LIMIT_PULL        GPIO_NOPULL
+  //#define LIMIT_PULL        GPIO_PULLDOWN
+  //#define LIMIT_PULL        GPIO_MODE_IT_RISING_FALLING
   // X_LIMIT_Pin
   // Y_LIMIT_Pin
   // Z_LIMIT_Pin  For dual
