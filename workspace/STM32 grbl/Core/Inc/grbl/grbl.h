@@ -47,6 +47,7 @@
 #include "system.h"
 #include "defaults.h"
 #include "cpu_map.h"
+#include "interrupts.h"
 #include "planner.h"
 #include "coolant_control.h"
 #include "emu_eeprom.h"

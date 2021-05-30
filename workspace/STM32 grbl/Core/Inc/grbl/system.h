@@ -102,7 +102,7 @@
 #define STEP_CONTROL_UPDATE_SPINDLE_PWM   bit(3)
 
 // Define control pin index for Grbl internal use. Pin maps may change, but these values don't.
-#ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
+#ifdef CONTROL_SAFETY_DOOR_Pin
   #define N_CONTROL_PIN 4
   #define CONTROL_PIN_INDEX_SAFETY_DOOR   bit(0)
   #define CONTROL_PIN_INDEX_RESET         bit(1)
@@ -207,6 +207,8 @@ void system_set_exec_motion_override_flag(uint8_t mask);
 void system_set_exec_accessory_override_flag(uint8_t mask);
 void system_clear_exec_motion_overrides();
 void system_clear_exec_accessory_overrides();
+
+void Control_GPIO_EXTI_Callback();
 
 
 #endif

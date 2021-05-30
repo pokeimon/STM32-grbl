@@ -415,7 +415,7 @@ void report_build_info(char *line)
   #ifndef HOMING_INIT_LOCK
     serial_write('L');
   #endif
-  #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
+  #ifdef CONTROL_SAFETY_DOOR_Pin
     serial_write('+');
   #endif  
   #ifndef ENABLE_RESTORE_EEPROM_WIPE_ALL // NOTE: Shown when disabled.
@@ -589,7 +589,7 @@ void report_realtime_status()
         #endif
       }
       if (ctrl_pin_state) {
-        #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
+        #ifdef CONTROL_SAFETY_DOOR_Pin
           if (bit_istrue(ctrl_pin_state,CONTROL_PIN_INDEX_SAFETY_DOOR)) { serial_write('D'); }
         #endif
         if (bit_istrue(ctrl_pin_state,CONTROL_PIN_INDEX_RESET)) { serial_write('R'); }

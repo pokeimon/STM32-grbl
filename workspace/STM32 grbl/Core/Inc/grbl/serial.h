@@ -59,4 +59,8 @@ uint8_t serial_get_rx_buffer_count();
 // NOTE: Not used except for debugging and ensuring no TX bottlenecks.
 uint8_t serial_get_tx_buffer_count();
 
+void Serial_UART_TxCpltCallback(UART_HandleTypeDef *huart);
+
+void Serial_UART_RxCpltCallback(UART_HandleTypeDef *huart);
+
 #endif

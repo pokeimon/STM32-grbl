@@ -43,10 +43,31 @@
 
 
   // Define homing/hard limit switch input pins and limit interrupt vectors.
-  #define LIMIT_PIN        X_LIMIT_GPIO_Port
+  #define LIMIT_PORT        X_LIMIT_GPIO_Port
+  // X_LIMIT_Pin
+  // Y_LIMIT_Pin
+  // Z_LIMIT_Pin  For dual
   #if !defined(ENABLE_DUAL_AXIS)
     #define LIMIT_MASK     (X_LIMIT_Pin|Y_LIMIT_Pin|Z_LIMIT_Pin) // All limit bits
   #endif
+
+
+  // Define user-control controls (cycle start, reset, feed hold) input pins.
+  // NOTE: All CONTROLs pins must be on the same port and not on a port with other input pins (limits).
+  //       GPIO Pin number must be different from Limit pins
+  #define CONTROL_PORT      CONTROL_RESET_GPIO_Port
+  // CONTROL_RESET
+  // CONTROL_FEED_HOLD
+  // CONTROL_CYCLE_START
+  // CONTROL_SAFETY_DOOR  : Default disabled
+  #ifndef CONTROL_SAFETY_DOOR_Pin
+    #define CONTROL_MASK      (CONTROL_RESET_Pin|CONTROL_FEED_HOLD_Pin|CONTROL_CYCLE_START_Pin)
+  #else
+    #define CONTROL_MASK      (CONTROL_RESET_Pin|CONTROL_FEED_HOLD_Pin|CONTROL_CYCLE_START_Pin|CONTROL_SAFETY_DOOR_Pin)
+  #endif
+
+  #define CONTROL_INVERT_MASK   CONTROL_MASK // May be re-defined to only invert certain control pins.
+
 
   // Variable spindle configuration below. Do not change unless you know what you are doing.
   // NOTE: Only used when variable spindle is enabled.
@@ -56,6 +77,20 @@
   #endif
   #define SPINDLE_PWM_OFF_VALUE     0
   #define SPINDLE_PWM_RANGE         (SPINDLE_PWM_MAX_VALUE-SPINDLE_PWM_MIN_VALUE)
+
+  // Define spindle enable and spindle direction output pins.
+  #define SPINDLE_ENABLE_PORT   PORTB
+  // Z Limit pin and spindle PWM/enable pin swapped to access hardware PWM on Pin 11.
+  #ifdef VARIABLE_SPINDLE
+    #ifdef USE_SPINDLE_DIR_AS_ENABLE_PIN
+      // If enabled, spindle direction pin now used as spindle enable, while PWM remains on D11.
+      #define SPINDLE_ENABLE_BIT    5  // Uno Digital Pin 13 (NOTE: D13 can't be pulled-high input due to LED.)
+    #else
+      #define SPINDLE_ENABLE_BIT    3  // Uno Digital Pin 11
+    #endif
+  #else
+    #define SPINDLE_ENABLE_BIT    4  // Uno Digital Pin 12
+  #endif
 
 #endif
 

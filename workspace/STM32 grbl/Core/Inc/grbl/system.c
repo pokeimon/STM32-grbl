@@ -23,14 +23,15 @@
 
 void system_init()
 {
-  CONTROL_DDR &= ~(CONTROL_MASK); // Configure as input pins
-  #ifdef DISABLE_CONTROL_PIN_PULL_UP
-    CONTROL_PORT &= ~(CONTROL_MASK); // Normal low operation. Requires external pull-down.
-  #else
-    CONTROL_PORT |= CONTROL_MASK;   // Enable internal pull-up resistors. Normal high operation.
-  #endif
-  CONTROL_PCMSK |= CONTROL_MASK;  // Enable specific pins of the Pin Change Interrupt
-  PCICR |= (1 << CONTROL_INT);   // Enable Pin Change Interrupt
+//  Init with HAL instead
+//  CONTROL_DDR &= ~(CONTROL_MASK); // Configure as input pins
+//  #ifdef DISABLE_CONTROL_PIN_PULL_UP
+//    CONTROL_PORT &= ~(CONTROL_MASK); // Normal low operation. Requires external pull-down.
+//  #else
+//    CONTROL_PORT |= CONTROL_MASK;   // Enable internal pull-up resistors. Normal high operation.
+//  #endif
+//  CONTROL_PCMSK |= CONTROL_MASK;  // Enable specific pins of the Pin Change Interrupt
+//  PCICR |= (1 << CONTROL_INT);   // Enable Pin Change Interrupt
 }
 
 
@@ -40,18 +41,18 @@ void system_init()
 uint8_t system_control_get_state()
 {
   uint8_t control_state = 0;
-  uint8_t pin = (CONTROL_PIN & CONTROL_MASK) ^ CONTROL_MASK;
+  uint16_t pin = (CONTROL_PORT->IDR & CONTROL_MASK) ^ CONTROL_MASK;//(CONTROL_PIN & CONTROL_MASK) ^ CONTROL_MASK;
   #ifdef INVERT_CONTROL_PIN_MASK
     pin ^= INVERT_CONTROL_PIN_MASK;
   #endif
   if (pin) {
-    #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
-      if (bit_istrue(pin,(1<<CONTROL_SAFETY_DOOR_BIT))) { control_state |= CONTROL_PIN_INDEX_SAFETY_DOOR; }
+    #ifdef CONTROL_SAFETY_DOOR_Pin
+      if (bit_istrue(pin,CONTROL_SAFETY_DOOR_Pin)) { control_state |= CONTROL_PIN_INDEX_SAFETY_DOOR; }
     #else
-      if (bit_istrue(pin,(1<<CONTROL_FEED_HOLD_BIT))) { control_state |= CONTROL_PIN_INDEX_FEED_HOLD; }
+      if (bit_istrue(pin,CONTROL_FEED_HOLD_Pin)) { control_state |= CONTROL_PIN_INDEX_FEED_HOLD; }
     #endif
-    if (bit_istrue(pin,(1<<CONTROL_RESET_BIT))) { control_state |= CONTROL_PIN_INDEX_RESET; }
-    if (bit_istrue(pin,(1<<CONTROL_CYCLE_START_BIT))) { control_state |= CONTROL_PIN_INDEX_CYCLE_START; }
+    if (bit_istrue(pin,CONTROL_RESET_Pin)) { control_state |= CONTROL_PIN_INDEX_RESET; }
+    if (bit_istrue(pin,CONTROL_CYCLE_START_Pin)) { control_state |= CONTROL_PIN_INDEX_CYCLE_START; }
   }
   return(control_state);
 }
@@ -61,7 +62,7 @@ uint8_t system_control_get_state()
 // only the realtime command execute variable to have the main program execute these when
 // its ready. This works exactly like the character-based realtime commands when picked off
 // directly from the incoming serial data stream.
-ISR(CONTROL_INT_vect)
+void Control_GPIO_EXTI_Callback()
 {
   uint8_t pin = system_control_get_state();
   if (pin) {
@@ -71,7 +72,7 @@ ISR(CONTROL_INT_vect)
     if (bit_istrue(pin,CONTROL_PIN_INDEX_CYCLE_START)) {
       bit_true(sys_rt_exec_state, EXEC_CYCLE_START);
     }
-    #ifndef ENABLE_SAFETY_DOOR_INPUT_PIN
+    #ifndef CONTROL_SAFETY_DOOR_Pin
       if (bit_istrue(pin,CONTROL_PIN_INDEX_FEED_HOLD)) {
         bit_true(sys_rt_exec_state, EXEC_FEED_HOLD);
     #else
@@ -86,7 +87,7 @@ ISR(CONTROL_INT_vect)
 // Returns if safety door is ajar(T) or closed(F), based on pin state.
 uint8_t system_check_safety_door_ajar()
 {
-  #ifdef ENABLE_SAFETY_DOOR_INPUT_PIN
+  #ifdef CONTROL_SAFETY_DOOR_Pin
     return(system_control_get_state() & CONTROL_PIN_INDEX_SAFETY_DOOR);
   #else
     return(false); // Input pin not enabled, so just return that it's closed.
@@ -354,57 +355,57 @@ uint8_t system_check_travel_limits(float *target)
 
 // Special handlers for setting and clearing Grbl's real-time execution flags.
 void system_set_exec_state_flag(uint8_t mask) {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  __disable_irq();//cli();
   sys_rt_exec_state |= (mask);
-  SREG = sreg;
+  __enable_irq();//SREG = sreg;
 }
 
 void system_clear_exec_state_flag(uint8_t mask) {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  __disable_irq();//cli();
   sys_rt_exec_state &= ~(mask);
-  SREG = sreg;
+  __enable_irq();//SREG = sreg;
 }
 
 void system_set_exec_alarm(uint8_t code) {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  __disable_irq();//cli();
   sys_rt_exec_alarm = code;
-  SREG = sreg;
+  __enable_irq();//SREG = sreg;
 }
 
 void system_clear_exec_alarm() {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  __disable_irq();//cli();
   sys_rt_exec_alarm = 0;
-  SREG = sreg;
+  __enable_irq();//SREG = sreg;
 }
 
 void system_set_exec_motion_override_flag(uint8_t mask) {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  __disable_irq();//cli();
   sys_rt_exec_motion_override |= (mask);
-  SREG = sreg;
+  __enable_irq();//SREG = sreg;
 }
 
 void system_set_exec_accessory_override_flag(uint8_t mask) {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  __disable_irq();//cli();
   sys_rt_exec_accessory_override |= (mask);
-  SREG = sreg;
+  __enable_irq();//SREG = sreg;
 }
 
 void system_clear_exec_motion_overrides() {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  __disable_irq();//cli();
   sys_rt_exec_motion_override = 0;
-  SREG = sreg;
+  __enable_irq();//SREG = sreg;
 }
 
 void system_clear_exec_accessory_overrides() {
-  uint8_t sreg = SREG;
-  cli();
+  //uint8_t sreg = SREG;
+  __disable_irq();//cli();
   sys_rt_exec_accessory_override = 0;
-  SREG = sreg;
+  __enable_irq();//SREG = sreg;
 }

@@ -32,6 +32,9 @@ void limits_disable();
 // Returns limit state as a bit-wise uint8 variable.
 uint8_t limits_get_state();
 
+// Called by HAL_GPIO_EXTI_Callback
+void Limit_GPIO_EXTI_Callback ();
+
 // Perform one portion of the homing cycle based on the input settings.
 void limits_go_home(uint8_t cycle_mask);
 

@@ -32,14 +32,14 @@ void spindle_init()
   #ifdef VARIABLE_SPINDLE
     // Configure variable spindle PWM and enable pin, if requried. On the Uno, PWM and enable are
     // combined unless configured otherwise.
-    SPINDLE_PWM_DDR |= (1<<SPINDLE_PWM_BIT); // Configure as PWM output pin.
-    SPINDLE_TCCRA_REGISTER = SPINDLE_TCCRA_INIT_MASK; // Configure PWM output compare timer
-    SPINDLE_TCCRB_REGISTER = SPINDLE_TCCRB_INIT_MASK;
+    //SPINDLE_PWM_DDR |= (1<<SPINDLE_PWM_BIT); // Configure as PWM output pin.
+    //SPINDLE_TCCRA_REGISTER = SPINDLE_TCCRA_INIT_MASK; // Configure PWM output compare timer
+    //SPINDLE_TCCRB_REGISTER = SPINDLE_TCCRB_INIT_MASK;
     #ifdef USE_SPINDLE_DIR_AS_ENABLE_PIN
       SPINDLE_ENABLE_DDR |= (1<<SPINDLE_ENABLE_BIT); // Configure as output pin.
     #else
       #ifndef ENABLE_DUAL_AXIS
-        SPINDLE_DIRECTION_DDR |= (1<<SPINDLE_DIRECTION_BIT); // Configure as output pin.
+        //SPINDLE_DIRECTION_DDR |= (1<<SPINDLE_DIRECTION_BIT); // Configure as output pin.
       #endif
     #endif
     pwm_gradient = SPINDLE_PWM_RANGE/(settings.rpm_max-settings.rpm_min);

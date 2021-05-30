@@ -40,19 +40,15 @@
 
 void limits_init()
 {
-  //LIMIT_DDR &= ~(LIMIT_MASK); // Set as input pins
-
-  #ifdef DISABLE_LIMIT_PIN_PULL_UP
-    //LIMIT_PORT &= ~(LIMIT_MASK); // Normal low operation. Requires external pull-down.
-  #else
-    //LIMIT_PORT |= (LIMIT_MASK);  // Enable internal pull-up resistors. Normal high operation.
-  #endif
-
   if (bit_istrue(settings.flags,BITFLAG_HARD_LIMIT_ENABLE)) {
-    //LIMIT_PCMSK |= LIMIT_MASK; // Enable specific pins of the Pin Change Interrupt
-    //PCICR |= (1 << LIMIT_INT); // Enable Pin Change Interrupt
+    GPIO_InitTypeDef GPIO_InitStruct = {0};
+    /*Configure GPIO pins : Limit pins */
+    GPIO_InitStruct.Pin = LIMIT_MASK;
+    GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
+    HAL_GPIO_Init(LIMIT_PORT, &GPIO_InitStruct);
   } else {
-    //limits_disable();
+    limits_disable();
   }
 
   #ifdef ENABLE_SOFTWARE_DEBOUNCE
@@ -64,20 +60,25 @@ void limits_init()
 
 
 // Disables hard limits.
-/*void limits_disable()
+void limits_disable()
 {
-  LIMIT_PCMSK &= ~LIMIT_MASK;  // Disable specific pins of the Pin Change Interrupt
-  PCICR &= ~(1 << LIMIT_INT);  // Disable Pin Change Interrupt
-}*/
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+  /*Configure GPIO pins : Limit pins */
+  GPIO_InitStruct.Pin = LIMIT_MASK;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  HAL_GPIO_Init(LIMIT_PORT, &GPIO_InitStruct);
+}
 
 
-// Returns limit state as a bit-wise uint8 variable. Each bit indicates an axis limit, where
+// Returns limit state as a bit-wise uint16 variable. Each bit indicates an axis limit, where
 // triggered is 1 and not triggered is 0. Invert mask is applied. Axes are defined by their
 // number in bit position, i.e. Z_AXIS is (1<<2) or bit 2, and Y_AXIS is (1<<1) or bit 1.
 uint8_t limits_get_state()
 {
   uint8_t limit_state = 0;
-  uint16_t pin = ((LIMIT_PIN->IDR) & LIMIT_MASK);
+  uint16_t pin = ((LIMIT_PORT->IDR) & LIMIT_MASK);
   #ifdef INVERT_LIMIT_PIN_MASK
     pin ^= INVERT_LIMIT_PIN_MASK;
   #endif
@@ -107,28 +108,28 @@ uint8_t limits_get_state()
 // special pinout for an e-stop, but it is generally recommended to just directly connect
 // your e-stop switch to the Arduino reset pin, since it is the most correct way to do this.
 #ifndef ENABLE_SOFTWARE_DEBOUNCE
-  ISR(LIMIT_INT_vect) // DEFAULT: Limit pin change interrupt process.
-  {
-    // Ignore limit switches if already in an alarm state or in-process of executing an alarm.
-    // When in the alarm state, Grbl should have been reset or will force a reset, so any pending
-    // moves in the planner and serial buffers are all cleared and newly sent blocks will be
-    // locked out until a homing cycle or a kill lock command. Allows the user to disable the hard
-    // limit setting if their limits are constantly triggering after a reset and move their axes.
-    if (sys.state != STATE_ALARM) {
-      if (!(sys_rt_exec_alarm)) {
-        #ifdef HARD_LIMIT_FORCE_STATE_CHECK
+void Limit_GPIO_EXTI_Callback () // DEFAULT: Limit pin change interrupt process.
+{
+  // Ignore limit switches if already in an alarm state or in-process of executing an alarm.
+  // When in the alarm state, Grbl should have been reset or will force a reset, so any pending
+  // moves in the planner and serial buffers are all cleared and newly sent blocks will be
+  // locked out until a homing cycle or a kill lock command. Allows the user to disable the hard
+  // limit setting if their limits are constantly triggering after a reset and move their axes.
+  if (sys.state != STATE_ALARM) {
+    if (!(sys_rt_exec_alarm)) {
+#ifdef HARD_LIMIT_FORCE_STATE_CHECK
           // Check limit pin state.
           if (limits_get_state()) {
             mc_reset(); // Initiate system kill.
             system_set_exec_alarm(EXEC_ALARM_HARD_LIMIT); // Indicate hard limit critical event
           }
         #else
-          mc_reset(); // Initiate system kill.
-          system_set_exec_alarm(EXEC_ALARM_HARD_LIMIT); // Indicate hard limit critical event
-        #endif
-      }
+      mc_reset (); // Initiate system kill.
+      system_set_exec_alarm (EXEC_ALARM_HARD_LIMIT); // Indicate hard limit critical event
+#endif
     }
   }
+}
 #else // OPTIONAL: Software debounce limit pin routine.
   // Upon limit pin change, enable watchdog timer to create a short delay. 
   ISR(LIMIT_INT_vect) { if (!(WDTCSR & (1<<WDIE))) { WDTCSR |= (1<<WDIE); } }

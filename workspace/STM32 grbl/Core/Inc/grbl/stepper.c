@@ -417,12 +417,12 @@ ISR(TIMER1_COMPA_vect)
     st.counter_x += st.exec_block->steps[X_AXIS];
   #endif
   if (st.counter_x > st.exec_block->step_event_count) {
-    st.step_outbits |= (1<<X_STEP_BIT);
+    st.step_outbits |= X_STEP_Pin;
     #if defined(ENABLE_DUAL_AXIS) && (DUAL_AXIS_SELECT == X_AXIS)
       st.step_outbits_dual = (1<<DUAL_STEP_BIT);
     #endif
     st.counter_x -= st.exec_block->step_event_count;
-    if (st.exec_block->direction_bits & (1<<X_DIRECTION_BIT)) { sys_position[X_AXIS]--; }
+    if (st.exec_block->direction_bits & X_DIRECTION_Pin) { sys_position[X_AXIS]--; }
     else { sys_position[X_AXIS]++; }
   }
   #ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
@@ -431,12 +431,12 @@ ISR(TIMER1_COMPA_vect)
     st.counter_y += st.exec_block->steps[Y_AXIS];
   #endif
   if (st.counter_y > st.exec_block->step_event_count) {
-    st.step_outbits |= (1<<Y_STEP_BIT);
+    st.step_outbits |= Y_STEP_Pin;
     #if defined(ENABLE_DUAL_AXIS) && (DUAL_AXIS_SELECT == Y_AXIS)
       st.step_outbits_dual = (1<<DUAL_STEP_BIT);
     #endif
     st.counter_y -= st.exec_block->step_event_count;
-    if (st.exec_block->direction_bits & (1<<Y_DIRECTION_BIT)) { sys_position[Y_AXIS]--; }
+    if (st.exec_block->direction_bits & Y_DIRECTION_Pin) { sys_position[Y_AXIS]--; }
     else { sys_position[Y_AXIS]++; }
   }
   #ifdef ADAPTIVE_MULTI_AXIS_STEP_SMOOTHING
@@ -445,9 +445,9 @@ ISR(TIMER1_COMPA_vect)
     st.counter_z += st.exec_block->steps[Z_AXIS];
   #endif
   if (st.counter_z > st.exec_block->step_event_count) {
-    st.step_outbits |= (1<<Z_STEP_BIT);
+    st.step_outbits |= Z_STEP_Pin;
     st.counter_z -= st.exec_block->step_event_count;
-    if (st.exec_block->direction_bits & (1<<Z_DIRECTION_BIT)) { sys_position[Z_AXIS]--; }
+    if (st.exec_block->direction_bits & Z_DIRECTION_Pin) { sys_position[Z_AXIS]--; }
     else { sys_position[Z_AXIS]++; }
   }
 
